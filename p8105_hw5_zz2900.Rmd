@@ -216,7 +216,7 @@ combine_df = left_join(all_df, rejected_df, by = "mu") %>%
                values_to = "average_estimate")
 ```
 
-```{r The association between average estimate of μ^ and the true value of μ}
+```{r Average estimate of μ^ and the true value of μ}
 combine_df %>% 
   filter(type == "all") %>% 
   ggplot(aes(x = mu, y = average_estimate)) +
@@ -228,7 +228,7 @@ combine_df %>%
     y = "Average estimate")
 ```
 
-```{r The association between true value of μ and the average estimated μ^ in All and rejected samples}
+```{r True value of μ and the average estimated μ^ in All and rejected samples}
 combine_df %>% 
   ggplot(aes(x = mu, y = average_estimate, color = type)) +
   geom_point() +
