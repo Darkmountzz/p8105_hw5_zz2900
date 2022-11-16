@@ -145,3 +145,102 @@ results_df %>%
   labs(title = "Estimates of Proportions of Homicides in Each City") +
   theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust = 1))
 ```
+
+## Problem 3 
+
+Generate the datasets for mu = 0,1,2,3,4,5,6
+
+```{r, files = T}
+stimulation = function(mu, sd = 5, size = 30, iterate = 5000){
+  stimulation = tibble(
+    mu = mu,
+    trial = seq(1:iterate),
+    results = rerun(iterate, rnorm(size, mu, sd)))
+  stimulation_df = stimulation %>%
+    mutate(ttest = map(.x = results, ~t.test(.x))) %>% 
+    mutate(pvalue = map(.x = ttest, ~broom::tidy(.x))) %>% 
+    unnest(pvalue) %>% 
+    select(mu, trial, estimate, p.value) %>%
+    mutate(sample_mean = estimate, p_value = p.value, .keep = "unused",
+           decision = case_when(
+             p_value < 0.05 ~ "Reject",
+             p_value >= 0.05 ~ "Fail to reject"
+           ))
+  return(stimulation_df)
+}
+
+stimulation_combine = tibble(
+  output = map(.x = 0:6, ~stimulation(.x)))
+
+stimulation_df = stimulation_combine %>% 
+  unnest(cols = c(output))
+```
+
+Make a plot showing the proportion of times the null was rejected (the power of the test) on the y axis and the true value of μ on the x axis
+
+```{r The association between size effect and power, message = F}
+stimulation_df %>% 
+  group_by(mu) %>% 
+  summarize(percent = length(decision[decision == "Reject"])/n()) %>% 
+  as_tibble() %>% 
+  ggplot(aes(x = mu, y = percent)) +
+  geom_point(size = 1.5) +
+  geom_line() +
+  labs(
+    title = "The association between effect size and power",
+    x = "True value of μ",
+    y = "Power") 
+```
+
+It seems that power is positively associated with effect size that the power would increase as the true value of mu increased from 0 to 6 which means the effect size = (true mean - mu null) would increase. Since variance maintained the same and parameter mu null set to 0, it became more unlikely to see extreme cases of average estimate equals to 0 as the power increased. In other words, the rejection region would be larger as the distribution move leftwards.
+
+Make a plot showing the average estimate of μ^ on the y axis and the true value of μ on the x axis; Make a second plot (or overlay on the first) the average estimate of μ^ only in samples for which the null was rejected on the y axis and the true value of μ on the x axis
+
+
+```{r, message = F}
+all_df = stimulation_df %>% 
+  group_by(mu) %>% 
+  summarise(avgest_all = mean(sample_mean)) %>% 
+  as_tibble()
+rejected_df = stimulation_df %>% 
+  filter(decision == "Reject") %>% 
+  group_by(mu) %>% 
+  summarise(avgest_rejected = mean(sample_mean)) %>% 
+  as_tibble()
+combine_df = left_join(all_df, rejected_df, by = "mu") %>% 
+  pivot_longer(avgest_all:avgest_rejected,
+               names_to = "type",
+               names_prefix = "avgest_",
+               values_to = "average_estimate")
+```
+
+```{r The association between average estimate of μ^ and the true value of μ}
+combine_df %>% 
+  filter(type == "all") %>% 
+  ggplot(aes(x = mu, y = average_estimate)) +
+  geom_point() +
+  geom_line() +
+  labs(
+    title = "The association between average estimate of μ^ and the true value of μ",
+    x = "True value of μ",
+    y = "Average estimate")
+```
+
+```{r The association between true value of μ and the average estimated μ^ in All and rejected samples}
+combine_df %>% 
+  ggplot(aes(x = mu, y = average_estimate, color = type)) +
+  geom_point() +
+  geom_line() +
+  labs(
+    title = "The association between true value of μ and the average estimated μ^ in All and rejected samples",
+    x = "True value of μ",
+    y = "Average estimate")
+```
+
+The sample average μ^ for all data is approximately equals to the true value of μ which consistent with the underlying population distribution.  
+The sample average of μ^ across tests for which the null is rejected is approximately equal to the true value of μ __unless__ the power of the test is not great enough.
+
+*   When true value of μ is 0, the average of μ^ is approximately the same as the true value of μ because about same amounts of extreme cases are being rejected. 
+*   When true value of μ equals to 1 or 2, only samples with greater sample means are rejected so that the average estimate of μ^ is larger than the true value of μ.
+
+It is noticeable that the difference between the sample average of μ^ of rejected groups and the true values became smaller as the effect size increases. As more and more samples being rejected, the average estimate of μ^ is approximately equal to the true value.  
