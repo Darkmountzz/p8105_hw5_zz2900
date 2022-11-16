@@ -223,7 +223,7 @@ combine_df %>%
   geom_point() +
   geom_line() +
   labs(
-    title = "The association between average estimate of μ^ and the true value of μ",
+    title = "Average estimate of μ^ and the true value of μ",
     x = "True value of μ",
     y = "Average estimate")
 ```
@@ -234,8 +234,8 @@ combine_df %>%
   geom_point() +
   geom_line() +
   labs(
-    title = "The association between true value of μ and the average estimated μ^ in All and rejected samples",
-    x = "True value of μ",
+    title = "True value of μ and the average estimated μ^ in All and rejected samples",
+    x = "True value of Mean",
     y = "Average estimate")
 ```
 
