@@ -98,7 +98,6 @@ homicide_df =
   filter(city_state != "Tulsa_AL")
 ```
 
-Let's look at this a bit.
 
 ```{r}
 aggregate_df = 
